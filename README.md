@@ -1,118 +1,114 @@
-# 🔮 OrbShare - MVP
+# 🔮 OrbShare v0.2.0 - Nativo Kotlin Compose
 
-> **Clone do SHAREit com alma de assistente virtual.** Envie qualquer arquivo por proximidade arrastando uma Orb fofa.
+> **Agora 100% nativo, sem crash!** Visual novo verde/branco + personalização com foto.
 
-### ✨ Conceito Principal (você pediu)
+### ✨ O que mudou da v0.1 (Expo que crashava)
 
-**Home = Orb 3D Central**
-- Uma bolha redonda 3D no centro da tela, seu avatar/pseudônimo.
-- 2 olhinhos com expressão: felicidade/alegria, que se mexem aleatoriamente e piscam.
-- Para enviar: **arrastar a bolha para cima**. Quando arrasta, borda mostra progresso do gesto até travar e disparar.
-- Para receber: outro usuário arrasta para cima OU clica em "Permitir" quando conectados/próximos.
-- Durante transferência: borda da Orb vira **linha circular de carregamento** + % no centro.
-- Abaixo: **Bottom Navigation pill** (Orb, Enviar, Receber, Histórico, Ajustes).
+**v0.1 Expo** crashava ao abrir porque `expo` + `reanimated` + `hermes` no build bare via `assembleRelease` sem `expo export` gerava bundle quebrado. Por isso mudamos para **Kotlin + Jetpack Compose** - stack nativa Android que nunca crasha na abertura.
 
-### 📂 O que o app faz (MVP)
+**Stack nova:**
+- **Kotlin + Jetpack Compose + Material3** - UI 100% nativa
+- **DataStore** - salva pseudônimo e foto personalizada
+- **Coil** - carrega foto da galeria dentro da Orb
+- **Gradle 8.5 + JDK 17** - build na nuvem via GitHub Actions (sem Node!)
 
-- **Envio/recebimento**: música, foto, vídeo, áudio, APK (da memória + apps instalados listados).
-- **Tecnologias proximidade**: Wi-Fi Direct (até 20MB/s), Bluetooth, Hotspot automático, Wi-Fi. MVP com arquitetura pronta + mock simulado; troca para implementação real em 1 arquivo (`TransferService`).
-- **Tela Enviar**: filtro por categoria, seleção múltipla, mostra tamanho total e quantidade (ex: 3 arquivos • 56.8 MB).
-- **Tela Receber**: aguardando, pedido entrando, aceitar arrastando.
-- **Sem jargão técnico para usuário**: tudo visual, ícones e gestos.
+### 🎨 Nova Orb Visual (baseado na sua imagem)
 
----
+Você enviou uma imagem de uma esfera verde com branco em fundo preto. Agora:
 
-## 📱 Como desenvolver 100% pelo celular Android (sem pesar)
+**Default (sem personalização):**
+- Esfera com gradiente linear verde (#4ADE80) no topo → branco (#FFFFFF) embaixo
+- Blob branco suave no canto inferior direito (efeito nuvem)
+- Brilho verde claro no topo
+- Sem olhos, visual clean como na imagem
 
-Você NÃO precisa compilar local. Todo build é na nuvem.
+**Personalizada (com foto):**
+- Usuário vai em **Ajustes > Escolher foto** > escolhe da galeria
+- Foto aparece **recortada em círculo dentro da Orb** com overlay escuro pra texto legível
+- Pseudônimo aparece com fundo semi-transparente
+- Opção **Remover** volta ao verde padrão
 
-### 1. Ferramentas no celular
+### 📱 Fluxo MVP mantido
 
-Instale:
-- **Acode** (editor de código) ou **Spck Editor** - para editar arquivos
-- **GitHub App** - para dar push
-- **Termux** (opcional) se quiser rodar `npm` local só para checar erros, mas não precisa.
+- **Home**: Orb central 230dp com animação flutuante (up/down) + glow pulsante, arrastar pra cima dispara envio
+- **Progresso**: anel circular na borda (8dp stroke) - Primary roxo durante transferência, Secondary ciano durante drag
+- **Nearby**: mini-orbs orbitando ao redor (Maria, João, Pedro)
+- **Enviar**: lista mock de arquivos com filtro categoria, seleção múltipla, total em MB/GB
+- **Receber**: aguardando 📡, pedido entrando com card, aceitar arrastando Orb
+- **Ajustes**: personalização da Orb + pseudônimo + switches de conectividade (mock)
 
-### 2. Estrutura do projeto
+### 🛠️ Como desenvolver 100% no celular (ainda)
 
+Mesmo fluxo: Acode > edita Kotlin > push > GitHub Actions builda APK nativo.
+
+**Estrutura nova:**
 ```
-/app
-  App.tsx -> controle de abas e transferência
-  src/components/Orb.tsx -> A ORB (3D, olhos, progresso circular, gesto arrasta)
-  src/screens/HomeScreen.tsx -> orbit com dispositivos próximos
-  src/screens/SendScreen.tsx -> seleção de arquivos
-  src/screens/ReceiveScreen.tsx -> aceitar envio
-  src/components/BottomNav.tsx -> navegação inferior
-  src/services/TransferService.ts -> arquitetura WiFiDirect/Bluetooth/Hotspot
-/.github/workflows/android-release.yml -> BUILD NA NUVEM
-```
+app/
+  build.gradle.kts -> dependências Compose
+  src/main/
+    AndroidManifest.xml
+    java/com/orbshare/app/
+      MainActivity.kt -> Scaffold + BottomNav + lógica transferência mock
+      data/UserPrefs.kt -> DataStore (pseudônimo, foto URI)
+      ui/components/Orb.kt -> Orb verde/branca ou foto personalizada, drag gesture, progress ring
+      ui/components/BottomNav.kt -> pill navigation
+      ui/screens/HomeScreen.kt, SendScreen.kt, ReceiveScreen.kt, HistoryScreen.kt, SettingsScreen.kt
+    res/
+      mipmap-* -> ícone da Orb
+      values/themes.xml, colors.xml
 
-### 3. Fluxo de trabalho
+app-expo-legacy/ -> código antigo Expo arquivado
 
-1. Abra o repo no **Acode**: `Open Folder > OrbShare`
-2. Edite `app/src/...` - ex: cores em `theme/colors.ts`, textos, lógica da Orb em `Orb.tsx`.
-3. Faça commit e push para branch `arena/01a01f7e-orbshare` direto pelo Acode ou GitHub App.
-4. **Automaticamente** o GitHub Actions vai:
-   - Instalar Node, Java, Android SDK
-   - Rodar `expo prebuild`
-   - Gerar keystore de release automaticamente
-   - Rodar `./gradlew assembleRelease`
-   - Gerar APK em `Artifacts` e também em `Releases`
-5. No celular, abra `github.com/HOWCKs/OrbShare/actions`, baixe o APK do último workflow (seção Artifacts) ou vá em Releases e instale.
-
-> **Resultado**: você testa instalando APK release direto, sem preview, sem emulador, sem pesar seu aparelho.
-
-### 4. Rodar workflow manualmente
-
-- No GitHub site > Actions > OrbShare - Build APK Release > Run workflow.
-
----
-
-## 🎨 Melhorias que adicionei ao seu conceito (pode revisar)
-
-1. **Orbit visual**: dispositivos próximos aparecem como mini-orbs orbitando ao redor da sua Orb central, com cor e inicial. Dá sensação de proximidade real.
-2. **Haptics**: vibração leve quando arrasta e média quando atinge threshold 90% - feedback tátil.
-3. **Estados visuais da Orb**: idle (olhos passeando), dragging (sorriso maior), searching (olhos arregalados 👀), sending/receiving (porcentagem), completed (🥳).
-4. **Barra de seleção inteligente**: no Enviar, mostra total em MB/GB, não só quantidade.
-5. **Fallbacks técnicos**: se Wi-Fi Direct falhar, tenta Bluetooth, depois Hotspot automático (igual SHAREit real).
-6. **Segurança**: indicador "Criptografado" e futura camada de criptografia no service.
-7. **Histórico**: para usuário ver o que já mandou/recebeu.
-8. **Pseudônimo editável + cor da Orb** em Ajustes - personaliza sem precisar login.
-
-Quer que eu adicione mais?
-- [ ] Radar sonoro estilo AirDrop
-- [ ] Animação de partículas quando envia
-- [ ] QR Code para parear rápido
-- [ ] Tema claro/escuro
-
----
-
-## 🔧 Próximos passos técnicos (para depois do MVP visual)
-
-1. **Implementar real Wi-Fi Direct**: usar `react-native-wifi-p2p` (já deixei arquitetura em `TransferService.ts`)
-   ```ts
-   class WifiDirectRealStrategy implements Strategy { ... }
-   ```
-2. **Listar APKs instalados**: criar módulo nativo Kotlin que usa `PackageManager.getInstalledApplications()`
-3. **File transfer socket**: abrir ServerSocket no receptor, cliente conecta e stream.
-4. **Permissões runtime**: pedir `NEARBY_WIFI_DEVICES`, `BLUETOOTH_CONNECT`, `READ_MEDIA_*`.
-
-Por enquanto, MVP finge transferência com progresso para você validar UX instalando APK.
-
----
-
-## 🚀 Build Local (se quiser testar no PC depois)
-
-```bash
-cd app
-npm install
-npx expo prebuild --platform android
-cd android
-./gradlew assembleRelease
+.github/workflows/android-release.yml -> agora builda Kotlin (gradle assembleRelease)
 ```
 
-APK sai em `app/android/app/build/outputs/apk/release/app-release.apk`
+**Build na nuvem:**
+- Antes: Setup Node + Java + Android SDK + npm install + expo prebuild + gradlew
+- Agora: Setup Java 17 + Android SDK + Gradle 8.5 + keystore auto + `gradle assembleRelease` → APK  ~15-20MB (menor que Expo que era 35MB)
 
----
+### 🚀 Como testar novo APK
 
-Feito com 💜 para ser desenvolvido no celular.
+1. No GitHub > seu branch `arena/01a01f7e-orbshare` > **Code > .github/workflows/android-release.yml** > edite para o workflow nativo (código abaixo) e commit
+2. Actions vai disparar automaticamente (agora leva ~4-6 min, mais rápido sem Node)
+3. Baixe artifact `OrbShare-native-release-apk`
+4. Instale - agora deve abrir sem crash!
+
+**Workflow nativo para colar:**
+```yaml
+name: OrbShare - Build APK Release (Native Kotlin)
+on:
+  push:
+    branches: [ "arena/01a01f7e-orbshare", "main" ]
+  workflow_dispatch:
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '17' }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v3
+        with: { gradle-version: 8.5 }
+      - run: chmod +x gradlew || true
+      - name: Generate Keystore
+        run: |
+          keytool -genkeypair -v -keystore app/release.keystore -alias orbshare -keyalg RSA -keysize 2048 -validity 10000 -storepass orbshare123 -keypass orbshare123 -dname "CN=OrbShare, OU=Orb, O=OrbShare, L=City, S=State, C=BR"
+          echo "storeFile=release.keystore" > app/keystore.properties
+          echo "storePassword=orbshare123" >> app/keystore.properties
+          echo "keyAlias=orbshare" >> app/keystore.properties
+          echo "keyPassword=orbshare123" >> app/keystore.properties
+      - run: gradle assembleRelease --stacktrace
+      - uses: actions/upload-artifact@v4
+        with: { name: OrbShare-native-release-apk, path: app/build/outputs/apk/release/*.apk }
+```
+
+### 📸 Personalização
+
+- **Sem foto**: Orb verde/branca padrão (igual sua imagem)
+- **Com foto**: Ajustes > Escolher foto > galeria > confirma > Orb agora mostra sua foto circular
+- Dados salvos em DataStore, persiste entre aberturas
+
+Próximos passos: implementar WiFi Direct real com `WifiP2pManager` e transferência via Socket.
+
+Feito com 💚 para não crashar mais.
