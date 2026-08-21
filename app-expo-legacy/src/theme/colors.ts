@@ -1,0 +1,32 @@
+export const colors = {
+  background: '#070711',
+  backgroundLight: '#111127',
+  card: '#17172F',
+  cardLight: '#1F1F3D',
+  primary: '#7C5CFF',
+  primaryLight: '#9B83FF',
+  primaryDark: '#5A3ED6',
+  secondary: '#00E5CC',
+  accent: '#FF5C9D',
+  orbInner1: '#8B6BFF',
+  orbInner2: '#5B3FD6',
+  orbOuter: '#2A1A66',
+  text: '#FFFFFF',
+  textSecondary: '#A0A0C0',
+  textMuted: '#66668A',
+  success: '#00E5A0',
+  warning: '#FFB020',
+  error: '#FF4D6A',
+  border: '#2A2A4A',
+  progressTrack: '#2A2A4A',
+  progressFill: '#7C5CFF',
+  shadow: 'rgba(124, 92, 255, 0.3)',
+};
+
+export const gradients = {
+  orb: ['#9B83FF', '#7C5CFF', '#4A2BC0'] as const,
+  orbHighlight: ['#B8A0FF', '#7C5CFF'] as const,
+  background: ['#070711', '#111127', '#1A1033'] as const,
+  button: ['#7C5CFF', '#5A3ED6'] as const,
+  card: ['#1F1F3D', '#17172F'] as const,
+};

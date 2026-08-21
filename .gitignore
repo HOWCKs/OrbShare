@@ -1,0 +1,34 @@
+# Expo legacy
+.expo
+.expo-shared
+app-expo-legacy/node_modules
+app-expo-legacy/android
+app-expo-legacy/ios
+app-expo-legacy/.expo
+
+# Node
+node_modules
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+package-lock.json
+yarn.lock
+
+# Native Android
+.gradle
+build/
+app/build/
+app/release/
+*.keystore
+*.jks
+app/keystore.properties
+local.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs (keep APKs via artifacts, but ignore local)
+*.apk
+*.aab
+!app-expo-legacy/assets/*.png
