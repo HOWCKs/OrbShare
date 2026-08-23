@@ -9,7 +9,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.orbshare.app.data.UserPrefs
 import com.orbshare.app.ui.components.Tab
 import com.orbshare.app.ui.components.BottomNav
 import com.orbshare.app.ui.components.OrbState
@@ -24,7 +23,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             OrbShareTheme {
-                val prefs = remember { UserPrefs(applicationContext) }
                 val scope = rememberCoroutineScope()
 
                 var activeTab by remember { mutableStateOf(Tab.HOME) }
@@ -32,15 +30,6 @@ class MainActivity : ComponentActivity() {
                 var progress by remember { mutableStateOf(0f) }
                 var pseudonym by remember { mutableStateOf("Sua Orb") }
                 var customImageUri by remember { mutableStateOf<Uri?>(null) }
-
-                // Load prefs
-                val pseudonymFlow by prefs.pseudonymFlow.collectAsState(initial = "Sua Orb")
-                val customUriFlow by prefs.customImageUriFlow.collectAsState(initial = null)
-
-                LaunchedEffect(pseudonymFlow) { pseudonym = pseudonymFlow }
-                LaunchedEffect(customUriFlow) {
-                    customImageUri = if (customUriFlow != null) Uri.parse(customUriFlow) else null
-                }
 
                 val nearbyDevices = remember {
                     listOf(
@@ -50,7 +39,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // Simulate transfer progress
                 LaunchedEffect(transferState) {
                     if (transferState == OrbState.SENDING || transferState == OrbState.RECEIVING) {
                         for (i in 0..100) {
@@ -85,7 +73,6 @@ class MainActivity : ComponentActivity() {
                                 onStartSend = {
                                     if (transferState == OrbState.IDLE) {
                                         transferState = OrbState.SEARCHING
-                                        // Simulate search -> connecting -> sending
                                         scope.launch {
                                             kotlinx.coroutines.delay(800)
                                             transferState = OrbState.CONNECTING
@@ -113,25 +100,15 @@ class MainActivity : ComponentActivity() {
                                 nearbyDevices = nearbyDevices,
                                 pseudonym = pseudonym,
                                 customImageUri = customImageUri,
-                                onAccept = {
-                                    transferState = OrbState.RECEIVING
-                                },
-                                onDecline = {
-                                    transferState = OrbState.IDLE
-                                }
+                                onAccept = { transferState = OrbState.RECEIVING },
+                                onDecline = { transferState = OrbState.IDLE }
                             )
                             Tab.HISTORY -> HistoryScreen()
                             Tab.SETTINGS -> SettingsScreen(
                                 pseudonym = pseudonym,
                                 customImageUri = customImageUri,
-                                onPseudonymChange = { newName ->
-                                    pseudonym = newName
-                                    scope.launch { prefs.setPseudonym(newName) }
-                                },
-                                onImagePick = { uri ->
-                                    customImageUri = uri
-                                    scope.launch { prefs.setCustomImageUri(uri) }
-                                }
+                                onPseudonymChange = { pseudonym = it },
+                                onImagePick = { customImageUri = it }
                             )
                         }
                     }

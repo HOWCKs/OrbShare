@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -17,11 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.orbshare.app.ui.theme.*
 
 @Composable
@@ -35,14 +32,6 @@ fun SettingsScreen(
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         onImagePick(uri)
     }
-
-    val colors = listOf(
-        Color(0xFF4ADE80) to "Verde (padrão)",
-        Color(0xFF7C5CFF) to "Roxo",
-        Color(0xFF00E5CC) to "Ciano",
-        Color(0xFFFF5C9D) to "Rosa",
-        Color(0xFFFFB020) to "Amarelo"
-    )
 
     Box(
         modifier = modifier
@@ -59,7 +48,6 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    // Profile card with image personalization
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -71,25 +59,19 @@ fun SettingsScreen(
                     ) {
                         Text(text = "Seu Avatar Orb", color = TextWhite, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Preview of orb with custom image
                             Box(
                                 modifier = Modifier
                                     .size(72.dp)
                                     .clip(CircleShape)
                                     .background(
                                         if (customImageUri == null) Brush.radialGradient(listOf(OrbGreen, OrbMint, OrbWhite))
-                                        else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                                        else Brush.linearGradient(listOf(Primary, Color(0xFF5A3ED6)))
                                     )
                                     .border(2.dp, Color.White.copy(alpha = 0.15f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (customImageUri != null) {
-                                    AsyncImage(
-                                        model = customImageUri,
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
+                                    Text(text = "🖼️", fontSize = 32.sp)
                                 } else {
                                     Text(text = pseudonym.firstOrNull()?.uppercase() ?: "O", color = Color(0xFF14532D), fontWeight = FontWeight.Black, fontSize = 28.sp)
                                 }
@@ -115,7 +97,6 @@ fun SettingsScreen(
                             }
                         }
 
-                        // Personalize with image
                         Text(text = "Personalizar Orb com foto", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
@@ -137,7 +118,7 @@ fun SettingsScreen(
                         }
                         if (customImageUri != null) {
                             Text(
-                                text = "Sua foto vai aparecer dentro da Orb! Se não gostar, pode remover e volta ao visual padrão verde.",
+                                text = "Foto selecionada! Na próxima versão com Coil, sua foto aparecerá dentro da Orb. Por enquanto, MVP mostra ícone 🖼️ dentro da Orb roxa personalizada.",
                                 color = TextMuted,
                                 fontSize = 11.sp,
                                 lineHeight = 14.sp
@@ -181,8 +162,8 @@ fun SettingsScreen(
                             .padding(18.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(text = "Sobre OrbShare v0.2.0", color = TextWhite, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
-                        Text(text = "Agora nativo Kotlin + Compose, sem crash! Visual verde padrão inspirado na sua imagem + personalização com foto.", color = TextMuted, fontSize = 12.sp, lineHeight = 16.sp)
+                        Text(text = "Sobre OrbShare v0.2.1", color = TextWhite, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                        Text(text = "Nativo Kotlin + Compose minimalista, sem crash! Visual verde padrão inspirado na sua imagem.", color = TextMuted, fontSize = 12.sp, lineHeight = 16.sp)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()

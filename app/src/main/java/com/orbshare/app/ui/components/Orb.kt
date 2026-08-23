@@ -7,25 +7,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.orbshare.app.ui.theme.*
 import kotlin.math.abs
 
@@ -34,21 +34,19 @@ enum class OrbState { IDLE, DRAGGING, SEARCHING, CONNECTING, SENDING, RECEIVING,
 @Composable
 fun Orb(
     state: OrbState,
-    progress: Float, // 0..1
-    dragProgress: Float, // 0..1 when dragging
+    progress: Float,
+    dragProgress: Float,
     pseudonym: String,
     customImageUri: Uri?,
     orbSize: Dp = 230.dp,
     fileCount: Int = 0,
     onDrag: (Float) -> Unit,
-    onDragEnd: (Boolean) -> Unit, // true if should trigger send
+    onDragEnd: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var offsetY by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
-    val thresholdPx = with(density) { 120.dp.toPx() }
 
-    // Floating animation
     val infiniteTransition = rememberInfiniteTransition(label = "float")
     val floatOffset by infiniteTransition.animateFloat(
         initialValue = -6f,
@@ -58,7 +56,6 @@ fun Orb(
             repeatMode = RepeatMode.Reverse
         ), label = "float"
     )
-
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
         targetValue = 0.7f,
@@ -72,7 +69,6 @@ fun Orb(
             .offset(y = (floatOffset + offsetY).dp),
         contentAlignment = Alignment.Center
     ) {
-        // Glow behind
         Box(
             modifier = Modifier
                 .size(orbSize + 40.dp)
@@ -80,10 +76,8 @@ fun Orb(
                 .background(Primary.copy(alpha = glowAlpha * 0.3f), CircleShape)
         )
 
-        // Progress ring canvas
         Canvas(modifier = Modifier.size(orbSize + 12.dp)) {
             val strokeWidth = 8.dp.toPx()
-            // Track
             drawArc(
                 color = Border,
                 startAngle = -90f,
@@ -94,7 +88,6 @@ fun Orb(
                 topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
                 alpha = 0.3f
             )
-            // Progress for transfer
             if (state == OrbState.SENDING || state == OrbState.RECEIVING) {
                 drawArc(
                     color = Primary,
@@ -106,7 +99,6 @@ fun Orb(
                     topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
                 )
             }
-            // Drag progress
             if (dragProgress > 0f && state != OrbState.SENDING && state != OrbState.RECEIVING) {
                 drawArc(
                     color = Secondary,
@@ -121,7 +113,6 @@ fun Orb(
             }
         }
 
-        // Orb body
         Box(
             modifier = Modifier
                 .size(orbSize)
@@ -132,18 +123,12 @@ fun Orb(
                         colors = listOf(OrbGreen, OrbMint, OrbWhite),
                         center = Offset(0.3f * orbSize.value * density.density, 0.3f * orbSize.value * density.density),
                         radius = orbSize.value * density.density
-                    ) else Brush.radialGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.2f)),
-                        center = Offset.Zero
-                    )
+                    ) else Brush.linearGradient(listOf(Primary, Color(0xFF5A3ED6)))
                 )
                 .pointerInput(Unit) {
                     detectVerticalDragGestures(
-                        onDragStart = {
-                            onDrag(0f)
-                        },
-                        onVerticalDrag = { change, dragAmount ->
-                            // Only allow drag up (negative)
+                        onDragStart = { onDrag(0f) },
+                        onVerticalDrag = { _, dragAmount ->
                             val newOffset = (offsetY + dragAmount / density.density).coerceAtMost(0f)
                             offsetY = newOffset
                             val prog = (abs(newOffset) / 120f).coerceIn(0f, 1f)
@@ -163,26 +148,9 @@ fun Orb(
                 },
             contentAlignment = Alignment.Center
         ) {
-            // If custom image, show it
-            if (customImageUri != null) {
-                AsyncImage(
-                    model = customImageUri,
-                    contentDescription = "Orb personalizada",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-                // Dark overlay for text readability
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.25f), CircleShape)
-                )
-            } else {
-                // Default green orb visual - mimics image: green top, white bottom with cloud-like blending
+            // Default green orb visual - mimics image
+            if (customImageUri == null) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    // Base
                     drawCircle(
                         brush = Brush.linearGradient(
                             colors = listOf(
@@ -197,7 +165,6 @@ fun Orb(
                         radius = size.minDimension / 2,
                         center = center
                     )
-                    // Cloud highlight - soft white blob bottom right
                     drawCircle(
                         brush = Brush.radialGradient(
                             colors = listOf(Color.White.copy(alpha = 0.9f), Color.Transparent),
@@ -207,16 +174,29 @@ fun Orb(
                         radius = size.width * 0.4f,
                         center = Offset(size.width * 0.75f, size.height * 0.65f)
                     )
-                    // Top green shine
                     drawCircle(
                         color = Color(0xFF22C55E).copy(alpha = 0.3f),
                         radius = size.width * 0.3f,
                         center = Offset(size.width * 0.35f, size.height * 0.35f)
                     )
                 }
+            } else {
+                // Custom image placeholder - for minimal build we show color with icon
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Brush.linearGradient(listOf(Primary, Color(0xFF5A3ED6)))),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "🖼️", fontSize = 48.sp)
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.25f), CircleShape)
+                )
             }
 
-            // Content inside
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -244,7 +224,6 @@ fun Orb(
                         )
                     }
                 } else {
-                    // Show pseudonym and hint
                     Text(
                         text = pseudonym,
                         fontSize = 15.sp,
@@ -254,7 +233,7 @@ fun Orb(
                         modifier = Modifier
                             .background(
                                 if (customImageUri != null) Color.Black.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.7f),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(8.dp)
                             )
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     )
@@ -266,7 +245,7 @@ fun Orb(
                             fontWeight = FontWeight.Bold,
                             color = Secondary,
                             modifier = Modifier
-                                .background(Color.Black.copy(alpha = 0.5f), androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
@@ -274,20 +253,16 @@ fun Orb(
             }
         }
 
-        // Ripple when near threshold
         if (dragProgress > 0.7f && state != OrbState.SENDING && state != OrbState.RECEIVING) {
             Box(
                 modifier = Modifier
                     .size(orbSize + 60.dp + (dragProgress * 20).dp)
-                    .background(Color.Transparent, CircleShape)
-                    .then(
-                        Modifier.drawBehind {
-                            drawCircle(
-                                color = Secondary.copy(alpha = dragProgress),
-                                style = Stroke(width = 2.dp.toPx())
-                            )
-                        }
-                    )
+                    .drawBehind {
+                        drawCircle(
+                            color = Secondary.copy(alpha = dragProgress),
+                            style = Stroke(width = 2.dp.toPx())
+                        )
+                    }
             )
         }
     }
